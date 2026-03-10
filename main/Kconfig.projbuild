@@ -1,0 +1,53 @@
+menu "NM-TV-154 Configuration"
+
+    config NMTV_TOUCH_PAD_NUM
+        int "Touch pad number (0-9)"
+        default 9
+        range 0 9
+        help
+            Capacitive touch pad channel for the top button.
+            Confirmed: T9 = GPIO 32 is the top touch button.
+            Available pads (not conflicting with display SPI):
+              T0 = GPIO 4
+              T5 = GPIO 12
+              T7 = GPIO 27
+              T8 = GPIO 33
+              T9 = GPIO 32  (default — top button)
+
+endmenu
+
+menu "BitAxe Dashboard"
+
+    config BITAXE_WIFI_SSID
+        string "WiFi SSID"
+        default "your-ssid"
+        help
+            SSID of the WiFi network to connect to.
+
+    config BITAXE_WIFI_PASSWORD
+        string "WiFi Password"
+        default ""
+        help
+            Password for the WiFi network.
+
+    config BITAXE_API_HOST
+        string "BitAxe IP Address"
+        default "10.5.0.6"
+        help
+            IP address of the BitAxe miner.
+
+    config BITAXE_POLL_INTERVAL_MS
+        int "API poll interval (ms)"
+        default 5000
+        range 2000 60000
+        help
+            How often to fetch data from the BitAxe API.
+
+    config BITAXE_BACKLIGHT_PERCENT
+        int "Display backlight brightness (%)"
+        default 80
+        range 0 100
+        help
+            Backlight brightness for the LCD display (0-100%).
+
+endmenu
