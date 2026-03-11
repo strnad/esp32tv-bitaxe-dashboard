@@ -113,7 +113,7 @@ esp_err_t display_init(void)
     esp_lcd_panel_handle_t panel_handle = NULL;
     esp_lcd_panel_dev_config_t panel_cfg = {
         .reset_gpio_num = BOARD_LCD_PIN_RST,    /* -1: SW reset */
-        .rgb_ele_order = BOARD_LCD_COLOR_ORDER,  /* BGR */
+        .rgb_ele_order = BOARD_LCD_COLOR_ORDER,  /* RGB — viz board_config.h */
         .bits_per_pixel = BOARD_LCD_BITS_PER_PIXEL,
     };
     ESP_RETURN_ON_ERROR(

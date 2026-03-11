@@ -30,8 +30,11 @@ LV_FONT_DECLARE(font_space_grotesk_28);
 #define CLR_TEXT_DIM    lv_color_hex(0x555555)
 
 #define CLR_GREEN       lv_color_hex(0x4ADE80)
+#define CLR_YELLOW      lv_color_hex(0xFDE047)
+#define CLR_ORANGE      lv_color_hex(0xFB923C)
 #define CLR_AMBER       lv_color_hex(0xFBBF24)
-#define CLR_RED         lv_color_hex(0xF87171)
+#define CLR_RED         lv_color_hex(0xEF4444)
+#define CLR_PURPLE      lv_color_hex(0xA855F7)
 
 #define CLR_ACCENT      lv_color_hex(0x60A5FA)
 
@@ -259,9 +262,30 @@ static lv_color_t hashrate_color(float ghs)
 
 static lv_color_t temp_color(float temp)
 {
-    if (temp < 70.0f)  return CLR_ACCENT;   /* blue — normal */
-    if (temp < 74.0f)  return CLR_AMBER;    /* amber — warm */
-    return CLR_RED;                          /* red — hot */
+    /* ≤60 °C: modrá */
+    if (temp <= 60.0f) return CLR_ACCENT;
+    /* 60→65 °C: modrá → zelená */
+    if (temp < 65.0f) {
+        uint8_t mix = (uint8_t)((65.0f - temp) / 5.0f * 255.0f);
+        return lv_color_mix(CLR_ACCENT, CLR_GREEN, mix);
+    }
+    /* 65→70 °C: zelená → žlutá */
+    if (temp < 70.0f) {
+        uint8_t mix = (uint8_t)((70.0f - temp) / 5.0f * 255.0f);
+        return lv_color_mix(CLR_GREEN, CLR_YELLOW, mix);
+    }
+    /* 70→73 °C: žlutá → oranžová */
+    if (temp < 73.0f) {
+        uint8_t mix = (uint8_t)((73.0f - temp) / 3.0f * 255.0f);
+        return lv_color_mix(CLR_YELLOW, CLR_ORANGE, mix);
+    }
+    /* 73→74 °C: oranžová → červená */
+    if (temp < 74.0f) {
+        uint8_t mix = (uint8_t)((74.0f - temp) / 1.0f * 255.0f);
+        return lv_color_mix(CLR_ORANGE, CLR_RED, mix);
+    }
+    /* ≥74 °C: fialová */
+    return CLR_PURPLE;
 }
 
 static void format_uptime(int seconds, char *buf, size_t buf_size)
@@ -436,10 +460,10 @@ static void build_screen_main(void)
     lv_obj_t *scr = make_screen();
     s_screens[0] = scr;
 
-    /* Coin logo — top right */
+    /* Coin logo — bottom center */
     s_coin_img = lv_image_create(scr);
     lv_obj_set_size(s_coin_img, 24, 24);
-    lv_obj_set_pos(s_coin_img, 210, 6);
+    lv_obj_align(s_coin_img, LV_ALIGN_TOP_MID, 0, 175);
     lv_obj_add_flag(s_coin_img, LV_OBJ_FLAG_HIDDEN);
 
     /* Hashrate value */
@@ -970,7 +994,6 @@ static void update_screen_main(const bitaxe_data_t *data)
         } else {
             /* Blend from amber to red as deviation goes from -2% to -10% */
             uint8_t mix = (uint8_t)((-deviation - 2.0f) * 255.0f / 8.0f);
-            if (mix > 255) mix = 255;
             bar_clr = lv_color_mix(CLR_RED, CLR_AMBER, mix);
         }
         lv_obj_set_style_text_color(s_hash_lbl, bar_clr, 0);
@@ -1026,7 +1049,7 @@ static void update_screen_main(const bitaxe_data_t *data)
     lv_obj_set_style_bg_color(s_temp_accent, tclr, 0);
     lv_obj_set_style_text_color(s_temp_icon, tclr, 0);
 
-    /* Critical temp blink control (>74.5°C) */
+    /* Critical temp blink (≥74.5°C = blíží se throttle) */
     if (data->temp > 74.5f) {
         if (!s_temp_critical) {
             s_temp_critical = true;
@@ -1451,8 +1474,8 @@ void ui_dashboard_update(const bitaxe_data_t *data)
         }
     }
 
-    /* Switch from connect screen on first valid data */
-    if (active == s_scr_connect) {
+    /* Switch from connect screen on first valid data (skip if block overlay is being shown) */
+    if (active == s_scr_connect && !data->show_new_block) {
         s_current_screen = 0;
         lv_screen_load_anim(s_screens[0],
                             LV_SCR_LOAD_ANIM_FADE_IN, 300, 0, false);
